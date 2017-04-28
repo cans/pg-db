@@ -1,0 +1,9 @@
+Ansible Role cans.pg-db todo-list
+=================================
+
+
+- Implement fine grain (_e.g._ per table) permissions;
+- Review benefits of *postgresql_privs* over *postgresql_user* privileges
+  management options;
+- Becoming postgresql not necessary, when admin user is connecting to the
+  cluster through a network connection (as in _not a Unix socket_). 

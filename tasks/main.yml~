@@ -1,0 +1,65 @@
+---
+- debug:
+    msg: "{{pg_test_db_socket | default(omit)}}"
+
+- name: Check local DB admin user exists
+  postgresql_user:
+    name: "{{ pg_test_db_admin_user }}"
+    db: "postgres"
+    password: "{{ pg_test_db_admin_password | default(omit) }}"
+    login_unix_socket: "{{ pg_test_db_socket | default(omit) }}"
+    # login_host: "{{ pg_test_db_host | default(omit) }}"
+    # port: "{{ pg_test_db_port | default(omit) }}"
+    role_attr_flags: SUPERUSER,CREATEDB
+    state: present
+  become: yes
+  become_user: postgres
+
+- name: Check local DB regular users exist
+  postgresql_user:
+    name: "{{ item.login }}"
+    db: "postgres"
+    password: "{{ item.password }}"
+    login_user: "{{ pg_test_db_admin_user }}"
+    login_host: "{{ item.host | default(pg_test_db_host) | default(omit) }}"
+    login_unix_socket: "{{ item.socket | default(pg_test_db_socket) }}"
+    role_attr_flags: "{{item.attr | default(pg_test_db_attr) }}"
+    state: present
+  become: yes
+  become_user: "{{ pg_test_db_admin_user }}"
+  with_items: "{{ pg_test_db_user_add }}"
+
+- name: Check local database exists
+  postgresql_db:
+    name: "{{item.name}}"
+    encoding: "{{ item.encoding | default(pg_test_db_encoding) }}"
+    owner: "{{ item.users[0] }}"
+    template: "{{ item.template|default('template0') }}"
+    login_host: "{ item.host | default(pg_test_db_host }}"
+    login_port: "{{ pg_test_db_port | default(pg_test_db_port) }}"
+    login_user: "{{ pg_test db_admin_user }}"
+    login_password: "{{pg_test_db_admin_password}}"
+    state: present
+  with_items: "{{pg_test_db_database_add}}"
+
+# As of PostGIS 2.2 or 2.3 this is no longer needed.
+# - name: Create a postgis schema
+#   command: psql "postgresql://{{kpler_etl_db_user}}:{{kpler_etl_db_password}}@{{kpler_db_host_name}}:{{pg_db_port}}/{{kpler_db_name}}" -c '{{item}}'
+#   when: 'postgis' in pg_test_db_extension
+#   with_items: "{{pg_extensions_pre_install_queries}}"
+#   register: command_result
+#   changed_when: ("already exists" not in command_result.stderr)
+
+- name: Check local DB has required extensions installed
+  postgresql_ext:
+    name: "{{item}}"
+    db: "{{kpler_db_name}}"
+    login_host: "{{kpler_db_host_name}}"
+    login_user: "{{pg_admin_user}}"
+    login_password: "{{kpler_adm_db_password}}"
+    state: "present"
+  with_items: "{{pg_extensions}}"
+
+- name: Extensions post-installation queries
+  command: psql "postgresql://{{pg_admin_user}}:{{kpler_adm_db_password}}@{{kpler_db_host_name}}:{{pg_db_port}}/{{kpler_db_name}}" -c '{{item}}'
+  with_items: "{{pg_extensions_post_install_queries}}"

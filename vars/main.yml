@@ -1,0 +1,4 @@
+---
+pg_db_postgres_release: "9.4"
+pg_db_apt_packages:
+  - python-psycopg2

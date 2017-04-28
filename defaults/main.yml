@@ -1,0 +1,13 @@
+---
+pg_db_admin_user: "postgres"
+pg_db_change_password: no
+pg_db_encoding: "UTF-8"
+pg_db_encrypt_password: yes
+pg_db_extensions: []
+# pg_db_host: omit
+pg_db_name: "test_{{ ansible_user_id }}"
+pg_db_port: "{% if pg_db_host is defined %}{{ pg_db_host }}{% else %}{{ omit }}{% endif %}"
+pg_db_role_add: []
+pg_db_role_attr: 'NOSUPERUSER,NOCREATEDB'
+pg_db_role_del: []
+# pg_db_socket: omit
