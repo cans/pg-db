@@ -7,3 +7,6 @@ Ansible Role cans.pg-db todo-list
   management options;
 - Becoming postgresql not necessary, when admin user is connecting to the
   cluster through a network connection (as in _not a Unix socket_). 
+
+
+[modeline]: # ( vim: set syntax=markdown fenc=utf-8 spell spl=en: )

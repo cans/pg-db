@@ -14,10 +14,20 @@ below:
 
     - login: "me, myself, and I"           (default: _undefined_)
       password: "{{variable_in_a_vault}}"  (default: _undefined_)
-      host: "dbserver0.domain.com"         (default: `pg_test_db_host` if defined, _see note below_)
+      host: "dbserver0.domain.com"         (default: `pg_test_db_host` if defined, see note below)
       socket: "/run/postgres/socket"       (default: `pg_test_db_socket`)
       attr: "NOSUPERUSER,CREATEDB"         (default: `pg_test_db_default_role_attributes`)
 
+Where:
+
+- `attr`: lists the attributes the user should have (_cf._
+  [CREATE ROLE](https://www.postgresql.org/docs/current/static/sql-createrole.html));
+- `host`: the hostname through which connect to the database cluster
+  (implies use of TCP/IP connection, mutually exclusive with `socket`);
+- `login`: the name to give to the new user;
+- `password`: the password to set for the new user;
+- `socket`: the path to a Unix Domain through which connect to the
+  database cluster (mutually exclusive with `host`);
 
 ### Specifying the databases to create
 
@@ -27,19 +37,38 @@ below:
     - name: "my_db"                    (default: _undefined_)
       extensions:                      (default: [])
         - "postgis"
-      host: "dbserver0.domain.com"     (default: `pg_test_db_host` if defined _see note below_)
-      socket: omit                     (default: `pg_test_db_socket` if defined _see note below_)
+      host: "dbserver0.domain.com"     (default: `pg_db_host` if defined, see note below)
+      socket: omit                     (default: `pg_db_socket` if defined, see note below)
+      owner: "alice"
       users:
         - name: "alice"
-          privs: ""
+          privs: "ALL"
 
+Where:
 
-Note:
+- `extensions`: lists the names of the postgres extension to install in
+  the database (default: *[]*);
+- `host`: the hostname through which connect to the database cluster
+  (implies use of TCP/IP connection, mutually exclusive with `socket`);
+- `name`: is the name of the database to create (*mandatory*);
+- `owner`: is the name of the user that should own the database
+  (default: *omit*, meaning *pg_db_admin_user* will own the database);
+- `socket`: the path to a Unix Domain through which connect to the
+  database cluster (mutually exclusive with `host`);
+- `users`: a list of users to grant some privileges to on the created
+  database (default: *[]*). Each user must be given a `login` and
+  a list of privileges via the `privs` variable;
 
-    Either of `socket` or `host` _should_ be defined, if neither is, then either
-    of `pg_test_db_host` or `pg_test_db_socket` **must** be defined.
+Users, whether specified in the `owner` or in the `users` list are
+assumed to exist *a priori*
 
-    This is true for items both representing roles _and_ databases.
+Notes:
+
+- Either of `socket` or `host` *should* be defined, if neither is, then either
+  of `pg_db_host` or `pg_db_socket` **must** be defined.
+  This is true for both items representing roles _and_ databases;
+- This role will create users, before creating databases to be able to
+  set ownership and privileges properly;
 
 
 Requirements
@@ -76,14 +105,14 @@ All the variables in this role are namespaced with the prefix `pg_db`
 - `pg_db_encrypt_password`: (default: yes)
 - `pg_db_extensions`:  (default: []);
 - `pg_db_host`: the default database server host to connect to (default: _omit_);
-- `pg_db_add`: the list of database to create (default: []);
+- `pg_db_database_add`: the list of database to create (default: []);
 - `pg_db_database_del`: the list of database to delete (default: []);
-- `pg_db_role_add`: the list of roles to create (default: []);
-- `pg_db_role_del`: the list of roles to delete (default: []);
 - `pg_db_socket`: the UNIX domain socket through which connect to the
   server (default: *undefined*);
 - `pg_db_system_user`: system user the cluster runs as. If set, this
-  role _su_ as that user before issuing priviledged commands.
+  role will become (_su_ as) that user before issuing priviledged commands.
+- `pg_db_user_add`: the list of roles to create (default: []);
+- `pg_db_user_del`: the list of roles to delete (default: []);
 
 
 Dependencies
