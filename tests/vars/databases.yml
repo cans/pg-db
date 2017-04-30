@@ -1,0 +1,22 @@
+---
+test_databases_unix:
+  - name: "alpha_test_db"
+    extensions:
+      - "postgis"
+    login_socket: "/run/postgresql"
+    login_user: "{{pg_db_admin_user}}"
+    owner: "alpha"
+    users:
+      - login: "alpha"
+        privs: "ALL"
+
+test_databases_tcp:
+  - name: "bravo_test_db"
+    extensions:
+      - "postgis"
+    login_host: "localhost"
+    login_user: "{{pg_db_admin_user}}"
+    owner: "bravo"
+    users:
+      - login: "bravo"
+        privs: "ALL"

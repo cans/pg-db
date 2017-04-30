@@ -2,14 +2,22 @@
 language: python
 python: "2.7"
 
-# Use the new container infrastructure
-sudo: false
+dist: trusty
+sudo: required
 
 # Install ansible
 addons:
+  postgresql: "9.6"
   apt:
     packages:
+    - postgis
+    - postgresql-9.6-postgis-2.3
+    - postgresql-9.6-postgis-2.3-scripts
     - python-pip
+    - python-psycopg2
+
+services:
+  - postgresql
 
 install:
   # Install ansible
@@ -19,11 +27,14 @@ install:
   - ansible --version
 
   # Create ansible.cfg with correct roles_path
-  - printf '[defaults]\nroles_path=../' >ansible.cfg
+  - printf '[defaults]\nroles_path=../\npipelining=true' >ansible.cfg
 
 script:
   # Basic role syntax check
-  - ansible-playbook tests/test.yml -i tests/inventory --syntax-check
+  - ansible-playbook tests/test.base.yml -i tests/inventory --syntax-check
+  - ansible-playbook tests/test.sudo.yml -i tests/inventory --syntax-check
+  # Actual tests
+  - ansible-playbook tests/test.sudo.yml -i tests/inventory --connection=local
 
 notifications:
   webhooks: https://galaxy.ansible.com/api/v1/notifications/

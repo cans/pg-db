@@ -1,5 +1,60 @@
 ---
-- hosts: localhost
+- hosts: servers
   remote_user: root
+  vars_files:
+    - vars/users.yml
+    - vars/databases.yml
   roles:
-    - pg-db
+    # First pass just sets a password for the db admin user
+    - role: "pg-db"
+      pg_db_socket: "/run/postgresql"
+      pg_db_admin_password: "toto"
+      pg_db_system_user: "postgres"
+
+  tasks:
+    - name: Ensure Alpha can connect
+      command: psql postgresql://postgres:toto@localhost/postgres -c '\l'
+
+
+- hosts: servers
+  remote_user: root
+  vars_files:
+    - vars/users.yml
+    - vars/databases.yml
+
+  roles:
+    - role: "pg-db"
+      pg_db_admin_password: "toto"
+      pg_db_admin_user: "postgres"
+      pg_db_host: "localhost"
+      pg_db_role_add: "{{ test_roles_unix }}"
+      pg_db_database_add: "{{ test_databases_unix }}"
+
+  tasks:
+
+    - name: Ensure Alpha can connect
+      command: psql postgresql://alpha:alphaspassword@localhost/alpha_test_db -c '\l'
+
+    - name: Ensure PostGis Extension was installed
+      command: psql postgresql://alpha:alphaspassword@localhost/alpha_test_db -c 'CREATE TABLE IF NOT EXISTS postgis_test (id SERIAL, coords GEOMETRY(POINT, 4326));'
+
+    - name: Ensure Alpha can connect
+      command: psql postgresql://alpha:alphaspassword@localhost/alpha_test_db -c '\l'
+
+
+- hosts: servers
+  remote_user: root
+  vars_files:
+    - vars/users.yml
+    - vars/databases.yml
+
+  roles:
+    - role: "pg-db"
+      pg_db_admin_password: "toto"
+      pg_db_host: "localhost"
+      pg_db_port: 5432
+      pg_db_user_del: "{{ test_roles_tcp }}"
+      pg_db_database_del: "{{ test_databases_tcp }}"
+
+
+# vim: et:syntax=yaml:sw=2:ts=2:

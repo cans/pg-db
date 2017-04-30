@@ -1,0 +1,131 @@
+---
+##
+#  All these tests require the Ansible User, i.e. the user as which Ansible
+#  will connect as to the target host (here root, unless overriden on the
+#  command line or in the inventory) to be able to assume the identity of
+#  the POSIX user running the PostgreSQL cluster (here postgres).
+# 
+#  This is so it is able to connect to the cluster via its Unix Domain
+#  socket. On most setup, that is only possible if the user as which you
+#  try to connect to the cluster, is the same as the system user you are 
+#  currently logged in as, on the host machine.
+#
+#  This role allows you to connect to a host, become another user there
+#  and connect, via the local unix socket, to the local cluster.
+#
+#  This is all tightly related to the configuration you put in your
+#  cluster's `pg_hba.conf` configuration file (confere
+#  https://www.postgresql.org/docs/current/static/auth-methods.html)
+##
+
+- hosts: servers
+  remote_user: root
+  vars_files:
+    - vars/users.yml
+    - vars/databases.yml
+  roles:
+
+    # First pass just sets a password for the db admin user
+    - role: "pg-db"
+      pg_db_socket: "/run/postgresql"
+      pg_db_admin_password: "toto"
+      pg_db_system_user: "postgres"
+
+  tasks:
+
+    - name: Ensure postgres use can connect through Unix socket
+      command: psql -d postgres -U postgres -c '\l'
+      # Or the "fancy" way:
+      # command: psql postgresql:///postgres -c '\l'
+      become: true
+      become_user: "postgres"
+
+    - name: Ensure postgres user can connect through TCP socket
+      command: psql postgresql://postgres:toto@localhost/postgres -c '\l'
+      # Or the old fashion way:
+      # command: psql -d postgres -h localhost -U postgres -W -c '\l'
+      # Does not require to "become" postgres
+
+
+- hosts: servers
+  remote_user: root
+  vars_files:
+    - vars/users.yml
+    - vars/databases.yml
+
+  roles:
+
+    - role: "pg-db"
+      pg_db_admin_password: "toto"
+      pg_db_admin_user: "postgres"
+      pg_db_user_add: "{{ test_roles_unix }}"
+      pg_db_database_add: "{{ test_databases_unix }}"
+      pg_db_system_user: "postgres"
+
+  tasks:
+
+    - name: Ensure Alpha can connect
+      command: psql postgresql://alpha:alphaspassword@localhost/alpha_test_db -c '\l'
+
+    - name: Ensure PostGis Extension was installed
+      command: psql postgresql://alpha:alphaspassword@localhost/alpha_test_db -c 'CREATE TABLE IF NOT EXISTS postgis_test (id SERIAL, coords GEOMETRY(POINT, 4326));'
+
+    - name: Ensure Alpha can connect
+      command: psql postgresql://alpha:alphaspassword@localhost/alpha_test_db -c '\l'
+
+
+- hosts: servers
+  remote_user: root
+  vars_files:
+    - vars/users.yml
+    - vars/databases.yml
+
+  roles:
+    - role: "pg-db"
+      pg_db_admin_password: "toto"
+      pg_db_admin_user: "postgres"
+      pg_db_user_del: "{{ test_roles_unix }}"
+      pg_db_database_del: "{{ test_databases_unix }}"
+      pg_db_system_user: "postgres"
+
+  # TODO: add validation tasks
+
+
+# - hosts: servers
+#   remote_user: root
+#   vars_files:
+#     - vars/users.yml
+#     - vars/databases.yml
+#   vars:
+#     admin_user:
+#       - login: postgres
+#         password: ""
+#         attr: "SUPERUSER,CREATEDB,CREATEROLE,LOGIN"
+# 
+#   ##
+#   #  Not really a test: resets admin password to '' so the tests included below
+#   #  won't fail.
+#   ##
+#   roles:
+#     - role: "pg-db"
+#       pg_db_admin_password: "toto"
+#       pg_db_admin_user: "postgres"
+#       pg_db_user_add: "{{ admin_user }}"
+#       pg_db_system_user: "postgres"
+# 
+#   tasks:
+#     - name: Ensure postgres use can connect through Unix socket
+#       command: psql -d postgres -U postgres -c '\l'
+#       # Or the "fancy" way:
+#       # command: psql postgresql:///postgres -c '\l'
+#       become: true
+#       become_user: "postgres"
+# 
+#     # - name: Ensure postgres user can connect through TCP socket
+#     #   command: psql postgresql://postgres:@localhost/postgres -c '\l'
+#     #   # Or the old-fashioned way:
+#     #   # command: psql -d postgres -h localhost -U postgres -W -c '\l'
+#     #   # Does not require to "become" postgres
+
+
+- include: test.base.yml

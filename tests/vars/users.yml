@@ -1,0 +1,11 @@
+test_roles_unix:
+  - login: 'alpha'
+    password: 'alphaspassword'
+    socket: '/run/postgresql'
+    attr: "SUPERUSER,CREATEDB"
+
+test_roles_tcp:
+  - login: 'bravo'
+    password: 'bravospassword'
+    host: 'localhost'
+    attr: "SUPERUSER,CREATEDB"

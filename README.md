@@ -71,6 +71,47 @@ Notes:
   set ownership and privileges properly;
 
 
+### Regarding tests and authentication
+
+This role comes with what tries to be a thorough test suite (admittedly
+incomplete as of yet).
+
+On challenge is to make sure authentication works depending on the very
+many scenarios you could face:
+
+- playbook ran locally connecting to a local Postgres cluster;
+- playbook ran locally connecting to a remote Postgres cluster;
+- playbook ran on a remote target and connecting to database local to
+  the target host;
+- playbook ran on a remote target used to bounce to yet another host
+  where the Postgres cluster is hosted;
+
+Some of that test suit is ran on the popular [TravisCI](travis-ci.org)
+online continuous integration service. Sadly, their build image come
+with very lax security set-up. This may hide issues with ill-handled
+scenarios amongst those listed above and the different connection and
+authentication options they offer.
+
+It is thus not recommanded to trust those tests outcome and run the
+tests on set-up of your own. For its development, this role's tests
+were typically run against a Debian distro inside a VM. The only
+modifications required being the following:
+
+- On the VM add a sudoer user (e.g. `ansible`) that does not require
+  a password (basically what you get e.g. if you set-up the VM with
+  vagrant).
+- Inside the `tests/` add a `inventory.local` file that points to the
+  VM, as follows:
+
+       [servers]
+       192.168.X.X ansible_user=<sudoer user>
+
+  Where `<sudoer user>` is to be substituted for the name of the user
+  you added at the previous step;
+
+You can then launch the `tests/run.sh` script to run the tests.
+
+
 Requirements
 ------------
 
