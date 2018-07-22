@@ -1,32 +1,32 @@
 ---
+# - hosts: servers
+#   remote_user: root
+#   vars_files:
+#     - vars/users.yml
+#     - vars/databases.yml
+#   roles:
+#     # First pass just sets a password for the db admin user
+#     - role: "pg-db"
+#       pg_db_socket: "/run/postgresql"
+#       pg_db_admin_password: "toto"
+#       pg_db_system_user: "postgres"
+
+#   tasks:
+#     - name: Ensure Alpha can connect
+#       command: psql postgresql://postgres:toto@localhost/postgres -c '\l'
+
+
 - hosts: servers
   remote_user: root
   vars_files:
     - vars/users.yml
     - vars/databases.yml
-  roles:
-    # First pass just sets a password for the db admin user
-    - role: "pg-db"
-      pg_db_socket: "/run/postgresql"
-      pg_db_admin_password: "toto"
-      pg_db_system_user: "postgres"
-
-  tasks:
-    - name: Ensure Alpha can connect
-      command: psql postgresql://postgres:toto@localhost/postgres -c '\l'
-
-
-- hosts: servers
-  remote_user: root
-  vars_files:
-    - vars/users.yml
-    - vars/databases.yml
 
   roles:
     - role: "pg-db"
-      pg_db_admin_password: "toto"
-      pg_db_admin_user: "postgres"
-      pg_db_host: "localhost"
+      pg_db_admin_password: "{{ lookup('env', 'POSTGRES_PASSWORD') }}"
+      pg_db_admin_user: "{{ lookup('env', 'POSTGRES_USER') }}"
+      pg_db_host: "{{ lookup('env', 'PGHOST') }}"
       pg_db_role_add: "{{ test_roles_unix }}"
       pg_db_database_add: "{{ test_databases_unix }}"
 

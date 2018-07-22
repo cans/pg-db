@@ -1,2 +1,4 @@
-[servers]
-localhost
+# override python interpreter to avoid `Failed to import docker-py` issues when
+# using the docker_container module, and running Ansible in a Python virtualenv.
+localhost ansible_python_interpreter="/usr/bin/env python"
+

@@ -19,6 +19,10 @@ addons:
 services:
   - postgresql
 
+env:  # Content duplicated (though syntax is different here).
+  - PGUSER=postgres
+  - PGPASSWORD=postgres
+
 install:
   # Install ansible
   - pip install ansible
